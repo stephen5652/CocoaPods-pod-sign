@@ -20,25 +20,10 @@ module Pod
         next unless target.respond_to?('product_type') && target.product_type == 'com.apple.product-type.bundle'
 
         target.build_configurations.each do |config|
-          if storage.skip_sign
-            config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-            next
-          end
-          sign_config = storage.configurations[config.name]
-          next unless sign_config.instance_of?(Hash)
-
-          config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = sign_config[:bundle_id] unless sign_config[:bundle_id].nil?
-          config.build_settings['DEVELOPMENT_TEAM'] = sign_config[:team_id]
-          config.build_settings['CODE_SIGN_STYLE'] = if sign_config[:sign_style]
-                                                       sign_config[:sign_style]
-                                                     else
-                                                       config.type == :debug ? 'Automatic' : 'Manual'
-                                                     end
-          config.build_settings['CODE_SIGN_IDENTITY'] = if sign_config[:sign_identity]
-                                                          sign_config[:sign_identity]
-                                                        else
-                                                          config.type == :debug ? 'Apple Development' : 'Apple Distribution'
-                                                        end
+          config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = "org.cocoapods.${PRODUCT_NAME}"
+          config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ""
+          config.build_settings['CODE_SIGNING_REQUIRED'] = "NO"
+          config.build_settings['CODE_SIGNING_ALLOWED'] = "NO"
         end
       end
 
@@ -49,6 +34,7 @@ module Pod
     private
 
     def pod_sign_extract_team_id_from_user_project
+      puts("YKHooke pod install")
       target = aggregate_targets.first.user_project.root_object.targets.first
       target&.build_configurations&.each do |config|
           xcconfig_hash ||=
